@@ -2,7 +2,7 @@
 // @name         WME E50 Fetch POI Data
 // @name:uk      WME 🇺🇦 E50 Fetch POI Data
 // @name:ru      WME 🇺🇦 E50 Fetch POI Data
-// @version      0.11.10
+// @version      0.11.11
 // @description  Fetch information about the POI from external sources
 // @description:uk Скрипт дозволяє отримувати інформацію про POI зі сторонніх ресурсів
 // @description:ru Скрипт для получения информации о POI с внешних ресурсов
@@ -711,7 +711,7 @@
      */
     element (lon, lat, city, street, number, name = '') {
       // Raw data from provider
-      let raw = [city, street, number, name].filter(x => !!x).join(', ')
+      let raw = [name,city, street, number].filter((x) => !!x).join(', ');
 
       {
         city = normalizeCity(city)
@@ -731,7 +731,7 @@
         cityName = cityModel.name
       }
 
-      let title = [street, number, name].filter(x => !!x).join(', ')
+      let title = [name, street, number].filter((x) => !!x).join(', ');
       return {
         lat: lat,
         lon: lon,
@@ -1371,38 +1371,38 @@
     if (streetId && streetId !== address.street.id && '' !== address.street.name) {
       // Ask to replace street with new one
       if (window.confirm(I18n.t(NAME).questions.changeStreet + '\n«' + address.street.name + '» ⟶ «' + streetName + '»?')) {
-        newStreetId = streetId
+        newStreetId = streetId;
       }
     } else if (streetId) {
       // Apply new street if the current street is not assigned or name is empty
-      newStreetId = streetId
+      newStreetId = streetId;
     } else if (!streetId) {
       // We don't found the street
       // - ask to create new one
-      let street
+      let street;
       if (streetName) {
         if (window.confirm(I18n.t(NAME).questions.notFoundStreet + '\n«' + streetName + '»?')) {
           // create new street
-          street = getStreet(city.id, streetName)
+          street = getStreet(city.id, streetName);
         } else {
           // use empty street
-          street = getStreet(city.id, '')
+          street = getStreet(city.id, '');
         }
       } else {
         // use empty street
-        street = getStreet(city.id, '')
+        street = getStreet(city.id, '');
       }
 
       if (street.id !== address.street.id && '' !== address.street.name) {
         if (window.confirm(I18n.t(NAME).questions.changeStreet + '\n«' + address.street.name + '» ⟶ «' + streetName + '»?')) {
-          newStreetId = street.id
+          newStreetId = street.id;
         }
       } else {
-        newStreetId = street.id
+        newStreetId = street.id;
       }
     }
 
-    if (newStreetId && newStreetId !== address.street.id && '' !== address.street.name) {
+    if (newStreetId && newStreetId !== address.street.id) {
       E50Instance.wmeSDK.DataModel.Venues.updateAddress({
         venueId: venue.id,
         streetId: newStreetId
