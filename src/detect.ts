@@ -45,16 +45,23 @@ export function detectStreet(wmeSDK: any, cityId: number, streetName: string): [
   let matches = [...streetName.matchAll(reTypes)]
   let types: string[] = []
 
+  // Only add a Ukrainian street-type prefix ("вул.") when the top country is
+  // Ukraine or Russia; elsewhere the provider's street name is used as-is
+  let topCountry = wmeSDK.DataModel.Countries.getTopCountry()
+  let isUaRu = !!(topCountry && ['UA', 'RU'].indexOf(topCountry.abbr.toUpperCase()) > -1)
+
   // Detect type(s)
-  if (matches.length === 0) {
+  if (matches.length === 0 && isUaRu) {
     types.push('вул.') // set up a basic type
     streetName = 'вул. ' + streetName
   } else {
     types = matches.map(match => match[0].toLowerCase())
   }
 
-  // Filter streets by detected type(s)
-  let filteredStreets = streets.filter((street: any) => types.some(type => street.name.indexOf(type) > -1))
+  // Filter streets by detected type(s); if no type was detected, match all streets
+  let filteredStreets = types.length
+    ? streets.filter((street: any) => types.some(type => street.name.indexOf(type) > -1))
+    : streets
 
   // Matching names without type(s)
   let best = findBestMatch(

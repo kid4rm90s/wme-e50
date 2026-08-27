@@ -6,7 +6,11 @@ export const SETTINGS = {
     externalProvider: false,
     copyData: true,
     lock: true,
+    addHouseNumber: true,
     linkGoogle: false,
+  },
+  format: {
+    nameFirst: false,
   },
   ranges: {
     radius: 200,

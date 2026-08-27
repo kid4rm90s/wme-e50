@@ -50,6 +50,29 @@ export class E50 extends WMEBase {
     fsOptions.addCheckboxes(checkboxes)
     tab.addElement(fsOptions)
 
+    // Setup format
+    /** @type {WMEUIHelperFieldset} */
+    let fsFormat = this.helper.createFieldset(WMEUI.t(NAME).format.title)
+    let nameFirst = this.settings.get('format', 'nameFirst')
+    let onFormat = (event: any) => this.settings.set('format', 'nameFirst', event.target.value === 'name')
+    fsFormat.addRadio(
+      'settings-format-street',
+      WMEUI.t(NAME).format.streetNumberName,
+      onFormat,
+      'settings-format',
+      'street',
+      !nameFirst
+    )
+    fsFormat.addRadio(
+      'settings-format-name',
+      WMEUI.t(NAME).format.nameNumberStreet,
+      onFormat,
+      'settings-format',
+      'name',
+      nameFirst
+    )
+    tab.addElement(fsFormat)
+
     // Setup ranges
     /** @type {WMEUIHelperFieldset} */
     let fsRanges = this.helper.createFieldset(WMEUI.t(NAME).ranges.title)
@@ -558,31 +581,34 @@ export class E50 extends WMEBase {
       })
     }
 
-    let newHouseNumber
+    // Apply a House Number (only when the option is enabled)
+    if (this.settings.get('options', 'addHouseNumber')) {
+      let newHouseNumber
 
-    // Apply a House Number
-    if (number) {
-      if (address.houseNumber) {
-        this.log('Replace the House Number with a new one?')
-        if (address.houseNumber !== number &&
-          window.confirm(WMEUI.t(NAME).questions.changeNumber + '\n\u00AB' + address.houseNumber + '\u00BB \u27F6 \u00AB' + number + '\u00BB?')) {
-          newHouseNumber = number
-          this.log(' \u2014 Yes, use a new House Number \u00AB' + number + '\u00BB')
+      // Apply a House Number
+      if (number) {
+        if (address.houseNumber) {
+          this.log('Replace the House Number with a new one?')
+          if (address.houseNumber !== number &&
+            window.confirm(WMEUI.t(NAME).questions.changeNumber + '\n\u00AB' + address.houseNumber + '\u00BB \u27F6 \u00AB' + number + '\u00BB?')) {
+            newHouseNumber = number
+            this.log(' \u2014 Yes, use a new House Number \u00AB' + number + '\u00BB')
+          } else {
+            this.log(' \u2014 No, use the current House Number \u00AB' + address.houseNumber + '\u00BB')
+          }
         } else {
-          this.log(' \u2014 No, use the current House Number \u00AB' + address.houseNumber + '\u00BB')
+          newHouseNumber = number
+          this.log('Use a new House Number \u00AB' + number + '\u00BB')
         }
-      } else {
-        newHouseNumber = number
-        this.log('Use a new House Number \u00AB' + number + '\u00BB')
       }
-    }
 
-    if (newHouseNumber) {
-      this.log('Apply a new House Number \u00AB' + newHouseNumber + '\u00BB' )
-      this.wmeSDK.DataModel.Venues.updateAddress({
-        venueId: venue.id,
-        houseNumber: newHouseNumber
-      })
+      if (newHouseNumber) {
+        this.log('Apply a new House Number \u00AB' + newHouseNumber + '\u00BB' )
+        this.wmeSDK.DataModel.Venues.updateAddress({
+          venueId: venue.id,
+          houseNumber: newHouseNumber
+        })
+      }
     }
 
     // Lock to level 2

@@ -132,7 +132,10 @@ export class Provider {
    */
   element(lon: any, lat: any, city: string, street: string, number: string, name: string = '', reference: string = '') {
     // Raw data from provider
-    let raw = [city, street, number, name].filter(x => !!x).join(', ')
+    let nameFirst = this.scriptSettings.get('format', 'nameFirst')
+    let raw = nameFirst
+      ? [name, number, street, city].filter(x => !!x).join(', ')
+      : [city, street, number, name].filter(x => !!x).join(', ')
 
     {
       city = normalizeCity(city)
@@ -152,7 +155,9 @@ export class Provider {
       cityName = cityModel.name
     }
 
-    let title = [street, number, name].filter(x => !!x).join(', ')
+    let title = nameFirst
+      ? [name, number, street].filter(x => !!x).join(', ')
+      : [street, number, name].filter(x => !!x).join(', ')
 
     return {
       lat: lat,

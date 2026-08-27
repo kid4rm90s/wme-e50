@@ -10,8 +10,14 @@ export const TRANSLATION: Record<string, any> = {
       externalProvider: 'Show pointer to linked place',
       copyData: 'Copy POI data to clipboard on click',
       lock: 'Lock POI to 2 level',
+      addHouseNumber: 'Auto-add House Number',
       linkGoogle: 'Auto-link Google place',
       keys: 'API keys',
+    },
+    format: {
+      title: 'Format Type',
+      streetNumberName: 'Street, Number, Name',
+      nameNumberStreet: 'Name, Number, Street',
     },
     ranges: {
       title: 'Additional',
@@ -48,8 +54,14 @@ export const TRANSLATION: Record<string, any> = {
       externalProvider: 'Відображати пов\'язане місце',
       copyData: 'При виборі, копіювати до буферу обміну назву та адресу POI',
       lock: 'Блокувати POI 2-м рівнем',
+      addHouseNumber: 'Автоматично додавати номер будинку',
       linkGoogle: 'Автоматично пов\'язувати місце Google',
       keys: 'Ключі до API',
+    },
+    format: {
+      title: 'Формат',
+      streetNumberName: 'Вулиця, номер, назва',
+      nameNumberStreet: 'Назва, номер, вулиця',
     },
     ranges: {
       title: 'Додаткові',
@@ -86,8 +98,14 @@ export const TRANSLATION: Record<string, any> = {
       externalProvider: 'Показывать связанное место',
       copyData: 'При виборе, копировать в буфер обмена название и адрес POI',
       lock: 'Блокировать POI 2-м уровнем',
+      addHouseNumber: 'Автоматически добавлять номер дома',
       linkGoogle: 'Автоматически связывать место Google',
       keys: 'Ключи к API',
+    },
+    format: {
+      title: 'Формат',
+      streetNumberName: 'Улица, номер, название',
+      nameNumberStreet: 'Название, номер, улица',
     },
     ranges: {
       title: 'Дополнительно',
@@ -123,8 +141,14 @@ export const TRANSLATION: Record<string, any> = {
       entryPoint: 'Créer le point d\'entrée s\'il n\'existe pas',
       copyData: 'Copier les informations du POI en cliquant',
       lock: 'Verrouiller le POI au niveau 2',
+      addHouseNumber: 'Ajouter automatiquement le numéro de rue',
       linkGoogle: 'Lier automatiquement le lieu Google',
       keys: 'API keys',
+    },
+    format: {
+      title: 'Format',
+      streetNumberName: 'Rue, numéro, nom',
+      nameNumberStreet: 'Nom, numéro, rue',
     },
     ranges: {
       title: 'Supplémentaire',

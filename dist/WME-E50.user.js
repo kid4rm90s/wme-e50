@@ -2,7 +2,7 @@
 // @name         WME E50 Fetch POI Data
 // @name:uk      WME 🇺🇦 E50 Fetch POI Data
 // @name:ru      WME 🇺🇦 E50 Fetch POI Data
-// @version      0.14.3
+// @version      0.14.6
 // @description  Fetch information about the POI from external sources
 // @description:uk Скрипт дозволяє отримувати інформацію про POI зі сторонніх ресурсів
 // @description:ru Скрипт для получения информации о POI с внешних ресурсов
@@ -46,8 +46,14 @@
                 externalProvider: 'Show pointer to linked place',
                 copyData: 'Copy POI data to clipboard on click',
                 lock: 'Lock POI to 2 level',
+                addHouseNumber: 'Auto-add House Number',
                 linkGoogle: 'Auto-link Google place',
                 keys: 'API keys',
+            },
+            format: {
+                title: 'Format Type',
+                streetNumberName: 'Street, Number, Name',
+                nameNumberStreet: 'Name, Number, Street',
             },
             ranges: {
                 title: 'Additional',
@@ -84,8 +90,14 @@
                 externalProvider: 'Відображати пов\'язане місце',
                 copyData: 'При виборі, копіювати до буферу обміну назву та адресу POI',
                 lock: 'Блокувати POI 2-м рівнем',
+                addHouseNumber: 'Автоматично додавати номер будинку',
                 linkGoogle: 'Автоматично пов\'язувати місце Google',
                 keys: 'Ключі до API',
+            },
+            format: {
+                title: 'Формат',
+                streetNumberName: 'Вулиця, номер, назва',
+                nameNumberStreet: 'Назва, номер, вулиця',
             },
             ranges: {
                 title: 'Додаткові',
@@ -122,8 +134,14 @@
                 externalProvider: 'Показывать связанное место',
                 copyData: 'При виборе, копировать в буфер обмена название и адрес POI',
                 lock: 'Блокировать POI 2-м уровнем',
+                addHouseNumber: 'Автоматически добавлять номер дома',
                 linkGoogle: 'Автоматически связывать место Google',
                 keys: 'Ключи к API',
+            },
+            format: {
+                title: 'Формат',
+                streetNumberName: 'Улица, номер, название',
+                nameNumberStreet: 'Название, номер, улица',
             },
             ranges: {
                 title: 'Дополнительно',
@@ -159,8 +177,14 @@
                 entryPoint: 'Créer le point d\'entrée s\'il n\'existe pas',
                 copyData: 'Copier les informations du POI en cliquant',
                 lock: 'Verrouiller le POI au niveau 2',
+                addHouseNumber: 'Ajouter automatiquement le numéro de rue',
                 linkGoogle: 'Lier automatiquement le lieu Google',
                 keys: 'API keys',
+            },
+            format: {
+                title: 'Format',
+                streetNumberName: 'Rue, numéro, nom',
+                nameNumberStreet: 'Nom, numéro, rue',
             },
             ranges: {
                 title: 'Supplémentaire',
@@ -196,7 +220,11 @@
             externalProvider: false,
             copyData: true,
             lock: true,
+            addHouseNumber: true,
             linkGoogle: false,
+        },
+        format: {
+            nameFirst: false,
         },
         ranges: {
             radius: 200,
@@ -498,16 +526,22 @@
         let reTypes = new RegExp('(алея|б-р|в\'їзд|вул\\.|дор\\.|мкрн|наб\\.|площа|пров\\.|проїзд|просп\\.|р-н|ст\\.|тракт|траса|тупик|узвіз|шосе)', 'gi');
         let matches = [...streetName.matchAll(reTypes)];
         let types = [];
+        // Only add a Ukrainian street-type prefix ("вул.") when the top country is
+        // Ukraine or Russia; elsewhere the provider's street name is used as-is
+        let topCountry = wmeSDK.DataModel.Countries.getTopCountry();
+        let isUaRu = !!(topCountry && ['UA', 'RU'].indexOf(topCountry.abbr.toUpperCase()) > -1);
         // Detect type(s)
-        if (matches.length === 0) {
+        if (matches.length === 0 && isUaRu) {
             types.push('вул.'); // set up a basic type
             streetName = 'вул. ' + streetName;
         }
         else {
             types = matches.map(match => match[0].toLowerCase());
         }
-        // Filter streets by detected type(s)
-        let filteredStreets = streets.filter((street) => types.some(type => street.name.indexOf(type) > -1));
+        // Filter streets by detected type(s); if no type was detected, match all streets
+        let filteredStreets = types.length
+            ? streets.filter((street) => types.some(type => street.name.indexOf(type) > -1))
+            : streets;
         // Matching names without type(s)
         let best = findBestMatch(streetName.replace(reTypes, '').toLowerCase().trim(), filteredStreets.map((street) => street.name.replace(reTypes, '').toLowerCase().trim()));
         if (best > -1) {
@@ -630,7 +664,10 @@
          */
         element(lon, lat, city, street, number, name = '', reference = '') {
             // Raw data from provider
-            let raw = [city, street, number, name].filter(x => !!x).join(', ');
+            let nameFirst = this.scriptSettings.get('format', 'nameFirst');
+            let raw = nameFirst
+                ? [name, number, street, city].filter(x => !!x).join(', ')
+                : [city, street, number, name].filter(x => !!x).join(', ');
             {
                 city = normalizeCity(city);
                 street = normalizeStreet(street);
@@ -645,7 +682,9 @@
                 cityId = cityModel.id;
                 cityName = cityModel.name;
             }
-            let title = [street, number, name].filter(x => !!x).join(', ');
+            let title = nameFirst
+                ? [name, number, street].filter(x => !!x).join(', ')
+                : [street, number, name].filter(x => !!x).join(', ');
             return {
                 lat: lat,
                 lon: lon,
@@ -1134,6 +1173,14 @@
             }
             fsOptions.addCheckboxes(checkboxes);
             tab.addElement(fsOptions);
+            // Setup format
+            /** @type {WMEUIHelperFieldset} */
+            let fsFormat = this.helper.createFieldset(WMEUI.t(NAME).format.title);
+            let nameFirst = this.settings.get('format', 'nameFirst');
+            let onFormat = (event) => this.settings.set('format', 'nameFirst', event.target.value === 'name');
+            fsFormat.addRadio('settings-format-street', WMEUI.t(NAME).format.streetNumberName, onFormat, 'settings-format', 'street', !nameFirst);
+            fsFormat.addRadio('settings-format-name', WMEUI.t(NAME).format.nameNumberStreet, onFormat, 'settings-format', 'name', nameFirst);
+            tab.addElement(fsFormat);
             // Setup ranges
             /** @type {WMEUIHelperFieldset} */
             let fsRanges = this.helper.createFieldset(WMEUI.t(NAME).ranges.title);
@@ -1579,31 +1626,34 @@
                     streetId: newStreetId
                 });
             }
-            let newHouseNumber;
-            // Apply a House Number
-            if (number) {
-                if (address.houseNumber) {
-                    this.log('Replace the House Number with a new one?');
-                    if (address.houseNumber !== number &&
-                        window.confirm(WMEUI.t(NAME).questions.changeNumber + '\n\u00AB' + address.houseNumber + '\u00BB \u27F6 \u00AB' + number + '\u00BB?')) {
-                        newHouseNumber = number;
-                        this.log(' \u2014 Yes, use a new House Number \u00AB' + number + '\u00BB');
+            // Apply a House Number (only when the option is enabled)
+            if (this.settings.get('options', 'addHouseNumber')) {
+                let newHouseNumber;
+                // Apply a House Number
+                if (number) {
+                    if (address.houseNumber) {
+                        this.log('Replace the House Number with a new one?');
+                        if (address.houseNumber !== number &&
+                            window.confirm(WMEUI.t(NAME).questions.changeNumber + '\n\u00AB' + address.houseNumber + '\u00BB \u27F6 \u00AB' + number + '\u00BB?')) {
+                            newHouseNumber = number;
+                            this.log(' \u2014 Yes, use a new House Number \u00AB' + number + '\u00BB');
+                        }
+                        else {
+                            this.log(' \u2014 No, use the current House Number \u00AB' + address.houseNumber + '\u00BB');
+                        }
                     }
                     else {
-                        this.log(' \u2014 No, use the current House Number \u00AB' + address.houseNumber + '\u00BB');
+                        newHouseNumber = number;
+                        this.log('Use a new House Number \u00AB' + number + '\u00BB');
                     }
                 }
-                else {
-                    newHouseNumber = number;
-                    this.log('Use a new House Number \u00AB' + number + '\u00BB');
+                if (newHouseNumber) {
+                    this.log('Apply a new House Number \u00AB' + newHouseNumber + '\u00BB');
+                    this.wmeSDK.DataModel.Venues.updateAddress({
+                        venueId: venue.id,
+                        houseNumber: newHouseNumber
+                    });
                 }
-            }
-            if (newHouseNumber) {
-                this.log('Apply a new House Number \u00AB' + newHouseNumber + '\u00BB');
-                this.wmeSDK.DataModel.Venues.updateAddress({
-                    venueId: venue.id,
-                    houseNumber: newHouseNumber
-                });
             }
             // Lock to level 2
             if (this.settings.get('options', 'lock')
