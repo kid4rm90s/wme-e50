@@ -2,7 +2,7 @@
 // @name         WME E50 Fetch POI Data
 // @name:uk      WME 🇺🇦 E50 Fetch POI Data
 // @name:ru      WME 🇺🇦 E50 Fetch POI Data
-// @version      0.14.6
+// @version      0.18.0
 // @description  Fetch information about the POI from external sources
 // @description:uk Скрипт дозволяє отримувати інформацію про POI зі сторонніх ресурсів
 // @description:ru Скрипт для получения информации о POI с внешних ресурсов
@@ -38,6 +38,8 @@
         'en': {
             title: 'Information 📍',
             notFound: 'Not found',
+            loadMore: 'Load more…',
+            loading: 'Loading…',
             options: {
                 title: 'Options',
                 modal: 'Use modal window',
@@ -48,6 +50,9 @@
                 lock: 'Lock POI to 2 level',
                 addHouseNumber: 'Auto-add House Number',
                 linkGoogle: 'Auto-link Google place',
+                addPhone: 'Auto-add Phone from Gmaps',
+                addWebsite: 'Auto-add Website',
+                addOpeningHours: 'Auto-add Opening Hours',
                 keys: 'API keys',
             },
             format: {
@@ -76,12 +81,15 @@
                 changeStreet: 'Are you sure to change the street name?',
                 changeNumber: 'Are you sure to change the house number?',
                 notFoundCity: 'City not found in the current location, are you sure to create a new one?',
-                notFoundStreet: 'Street not found in the current location, are you sure to create a new one?'
+                notFoundStreet: 'Street not found in the current location, are you sure to create a new one?',
+                changeGoogle: 'Are you sure to replace the existing Google data?',
             }
         },
         'uk': {
             title: 'Інформація 📍',
             notFound: 'Нічого не знайдено',
+            loadMore: 'Показати більше…',
+            loading: 'Завантаження…',
             options: {
                 title: 'Налаштування',
                 modal: 'Використовувати окрему панель',
@@ -92,6 +100,9 @@
                 lock: 'Блокувати POI 2-м рівнем',
                 addHouseNumber: 'Автоматично додавати номер будинку',
                 linkGoogle: 'Автоматично пов\'язувати місце Google',
+                addPhone: 'Автоматично додавати телефон з Gmaps',
+                addWebsite: 'Автоматично додавати вебсайт',
+                addOpeningHours: 'Автоматично додавати години роботи',
                 keys: 'Ключі до API',
             },
             format: {
@@ -121,11 +132,14 @@
                 changeNumber: 'Ви впевненні що хочете змінити номер дома?',
                 notFoundCity: 'Ми не знайшли такого міста у поточному місці, ви впевнені, що треба його додати?',
                 notFoundStreet: 'Ми не знайшли таку вулицю у поточному місці, ви впевнені, що треба її додати?',
+                changeGoogle: 'Ви впевненні що хочете замінити дані Google?',
             }
         },
         'ru': {
             title: 'Информация 📍',
             notFound: 'Ничего не найдено',
+            loadMore: 'Показать больше…',
+            loading: 'Загрузка…',
             options: {
                 title: 'Настройки',
                 modal: 'Использовать отдельную панель',
@@ -136,6 +150,9 @@
                 lock: 'Блокировать POI 2-м уровнем',
                 addHouseNumber: 'Автоматически добавлять номер дома',
                 linkGoogle: 'Автоматически связывать место Google',
+                addPhone: 'Автоматически добавлять телефон из Gmaps',
+                addWebsite: 'Автоматически добавлять вебсайт',
+                addOpeningHours: 'Автоматически добавлять часы работы',
                 keys: 'Ключи к API',
             },
             format: {
@@ -165,11 +182,14 @@
                 changeNumber: 'Ви уверены, что хотите изменить номер дома?',
                 notFoundCity: 'Мы не нашли такого города в данной локации, вы уверены что нужно его добавить?',
                 notFoundStreet: 'Мы не нашли такую улицу в данной локации, вы уверены что нужно её добавить?',
+                changeGoogle: 'Вы уверены, что хотите заменить данные Google?',
             }
         },
         'fr': {
             title: 'Informations 📍',
             notFound: 'Lieu inconnu',
+            loadMore: 'Afficher plus…',
+            loading: 'Chargement…',
             options: {
                 title: 'Réglages',
                 modal: 'Activer la fenêtre',
@@ -179,6 +199,9 @@
                 lock: 'Verrouiller le POI au niveau 2',
                 addHouseNumber: 'Ajouter automatiquement le numéro de rue',
                 linkGoogle: 'Lier automatiquement le lieu Google',
+                addPhone: 'Ajouter automatiquement le téléphone depuis Gmaps',
+                addWebsite: 'Ajouter automatiquement le site web',
+                addOpeningHours: 'Ajouter automatiquement les horaires',
                 keys: 'API keys',
             },
             format: {
@@ -207,7 +230,8 @@
                 changeStreet: 'Êtes-vous sûr de changer la rue ?',
                 changeNumber: 'Êtes-vous sûr de changer le numéro de rue ?',
                 notFoundCity: 'City not found in the current location, are you sure to create a new one?',
-                notFoundStreet: 'Street not found in the current location, are you sure to create a new one?'
+                notFoundStreet: 'Street not found in the current location, are you sure to create a new one?',
+                changeGoogle: 'Voulez-vous remplacer les données Google existantes ?',
             }
         }
     };
@@ -222,6 +246,9 @@
             lock: true,
             addHouseNumber: true,
             linkGoogle: false,
+            addPhone: false,
+            addWebsite: false,
+            addOpeningHours: false,
         },
         format: {
             nameFirst: false,
@@ -249,67 +276,221 @@
         }
     };
 
-    const LOCALE = {
-        // Ukraine
-        232: {
-            country: 'uk',
-            language: 'ua',
-            locale: 'uk_UA'
+    let E50Instance;
+    function setE50Instance(instance) {
+        E50Instance = instance;
+    }
+    /**
+     * Apply data to the current selected POI
+     */
+    function applyData(event) {
+        event.preventDefault();
+        E50Instance.applyData(event.target.dataset);
+        // If the clicked result came from the Google provider (it carries a Google
+        // place reference), also link it as the venue's external (Google) place by
+        // driving WME's own UI — but only when the "Auto-link Google place"
+        // option is enabled.
+        if (event.target.dataset.reference && E50Instance.settings.get('options', 'linkGoogle')) {
+            linkExternalProvider(event.target.dataset);
         }
-    };
-    // Road Types
-    //   I18n.translations.uk.segment.road_types
-    //   I18n.translations.en.segment.road_types
-    const TYPES = {
-        boardwalk: 10,
-        stairway: 16,
-        railroad: 18,
-        runway: 19,
-        parking: 20};
-
-    const layerConfig = {
-        styleContext: {
-            label: (context) => {
-                const style = context?.feature?.properties?.style;
-                if (!style)
-                    return style;
-                return style?.label;
-            },
-        },
-        styleRules: [
-            {
-                predicate: (properties) => properties.styleName === "styleNode",
-                style: {
-                    pointRadius: 8,
-                    fillOpacity: 0.5,
-                    fillColor: '#fff',
-                    strokeColor: '#fff',
-                    strokeWidth: 2,
-                    strokeLinecap: 'round',
-                    graphicZIndex: 9999,
-                },
-            },
-            {
-                predicate: (properties) => properties.styleName === "styleLine",
-                style: {
-                    strokeWidth: 4,
-                    strokeColor: '#fff',
-                    strokeLinecap: 'round',
-                    strokeDashstyle: 'dash',
-                    label: "${label}",
-                    labelOutlineColor: '#000',
-                    labelOutlineWidth: 3,
-                    labelAlign: 'cm',
-                    fontColor: '#fff',
-                    fontSize: '24px',
-                    fontFamily: 'Courier New, monospace',
-                    fontWeight: 'bold',
-                    labelYOffset: 24,
-                    graphicZIndex: 9999,
+    }
+    /**
+     * Recursively search for `selector` in the light DOM and inside the shadow
+     * roots of any custom elements. WME's UI is built from web components, so the
+     * real button/input live inside shadow roots.
+     */
+    function queryInShadows(root, selector) {
+        const direct = root.querySelector(selector);
+        if (direct) {
+            return direct;
+        }
+        const hosts = root.querySelectorAll('*');
+        for (let i = 0; i < hosts.length; i++) {
+            const host = hosts[i];
+            if (host.shadowRoot) {
+                const hit = queryInShadows(host.shadowRoot, selector);
+                if (hit) {
+                    return hit;
                 }
             }
-        ],
-    };
+        }
+        return null;
+    }
+    /**
+     * Same as queryInShadows but returns ALL matches (light DOM + shadow roots),
+     * in document order. Useful when multiple elements share a selector.
+     */
+    function queryInShadowsAll(root, selector) {
+        const results = [];
+        const collect = (r) => {
+            r.querySelectorAll(selector).forEach((el) => results.push(el));
+            const hosts = r.querySelectorAll('*');
+            for (let i = 0; i < hosts.length; i++) {
+                const host = hosts[i];
+                if (host.shadowRoot) {
+                    collect(host.shadowRoot);
+                }
+            }
+        };
+        collect(root);
+        return results;
+    }
+    /**
+     * Poll `fn` until it returns a truthy value or `timeout` ms elapse.
+     */
+    function waitFor(fn, timeout = 8000, interval = 150) {
+        return new Promise((resolve, reject) => {
+            const start = Date.now();
+            const tick = () => {
+                let result;
+                try {
+                    result = fn();
+                }
+                catch (e) {
+                    result = null;
+                }
+                if (result) {
+                    resolve(result);
+                    return;
+                }
+                if (Date.now() - start > timeout) {
+                    reject(new Error('waitFor: timed out'));
+                    return;
+                }
+                setTimeout(tick, interval);
+            };
+            tick();
+        });
+    }
+    /**
+     * Link the Google place from a Google-provider result to the currently
+     * selected venue by driving WME's own "+ Add linked Google place" UI:
+     *   1. click the add button
+     *   2. type the POI name into the search box
+     *   3. click the top autocomplete result
+     *
+     * NOTE: this drives WME's internal DOM (web components with shadow roots).
+     * The selectors below are best-effort and may need adjusting if WME changes
+     * its markup. Failures are logged but never break the address apply.
+     */
+    async function linkExternalProvider(data) {
+        try {
+            const reference = data.reference;
+            const name = data.name;
+            // WME links by searching a text query (name + address), not the place ID.
+            const searchQuery = data.query || name;
+            if (!reference || !searchQuery) {
+                return;
+            }
+            const venue = E50Instance.getSelectedPOI();
+            if (!venue || !E50Instance.canEditVenue(venue)) {
+                return;
+            }
+            // Skip if this Google place is already linked
+            const model = E50Instance.wmeSDK.DataModel.Venues.getById({ venueId: venue.id });
+            if (model && model.externalProviderIds && model.externalProviderIds.indexOf(reference) > -1) {
+                console.info('Google place is already linked');
+                return;
+            }
+            // 1. Click "+ Add linked Google place"
+            const addButton = await waitFor(() => queryInShadows(document, 'wz-button.external-provider-add-new'));
+            addButton.click();
+            // 2. Fill the "Search for a place" input. Use the native setter so the
+            //    component's value binding updates, then dispatch an input event.
+            const input = await waitFor(() => queryInShadows(document, 'input[placeholder="Search for a place"]'));
+            const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
+            if (valueSetter && valueSetter.set) {
+                valueSetter.set.call(input, searchQuery || '');
+            }
+            else {
+                input.value = searchQuery || '';
+            }
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            // 3. Wait for the autocomplete dropdown. Each result is a
+            //    "wz-menu-item.simple-item" that carries the Google place ID in its
+            //    "item-id" attribute. Prefer the exact place; otherwise use the top
+            //    result.
+            const resultEl = await waitFor(() => {
+                const items = queryInShadowsAll(document, 'wz-menu-item.simple-item');
+                if (!items.length) {
+                    return null;
+                }
+                return items.find((el) => el.getAttribute('item-id') === reference) || items[0];
+            });
+            resultEl.click();
+            console.info('✅ Google place linked as external provider');
+        }
+        catch (e) {
+            console.warn('Could not auto-link the Google place (WME UI may have changed)', e);
+        }
+    }
+    /**
+     * Create the vector from the center of the selected POI to point by lon and lat
+     */
+    function showLayer(event) {
+        const lon = parseFloat(event.target.dataset.lon);
+        const lat = parseFloat(event.target.dataset.lat);
+        E50Instance.createVector(lon, lat);
+        E50Instance.showLayer();
+    }
+    /**
+     * Remove all vectors and hide the layer
+     */
+    function hideLayer() {
+        E50Instance.removeVectors();
+        E50Instance.hideLayer();
+    }
+    // Last dragged position, kept for the lifetime of the script so a recreated
+    // modal (selection cleared, then a venue re-selected) reopens where it was left.
+    let modalPosition = null;
+    /**
+     * Make a modal window draggable by its header (native pointer events, no deps).
+     * The first drag anchors the modal with `position: fixed` at its current spot,
+     * so it floats over the map and can be moved anywhere.
+     */
+    function makeDraggable(modal) {
+        const handle = modal.querySelector('.wme-ui-modal-header');
+        if (!handle || handle.dataset.e50Drag)
+            return;
+        handle.dataset.e50Drag = '1';
+        handle.style.cursor = 'move';
+        // Reopen a rebuilt modal at the last dragged position
+        if (modalPosition) {
+            modal.style.position = 'fixed';
+            modal.style.margin = '0';
+            modal.style.left = modalPosition.left + 'px';
+            modal.style.top = modalPosition.top + 'px';
+            modal.style.zIndex = '99';
+        }
+        handle.addEventListener('pointerdown', (event) => {
+            if (event.target.closest('.wme-ui-modal-close'))
+                return;
+            const rect = modal.getBoundingClientRect();
+            const shiftX = event.clientX - rect.left;
+            const shiftY = event.clientY - rect.top;
+            modal.style.position = 'fixed';
+            modal.style.margin = '0';
+            modal.style.left = rect.left + 'px';
+            modal.style.top = rect.top + 'px';
+            modal.style.zIndex = '99';
+            handle.setPointerCapture(event.pointerId);
+            const move = (e) => {
+                const left = e.clientX - shiftX;
+                const top = e.clientY - shiftY;
+                modal.style.left = left + 'px';
+                modal.style.top = top + 'px';
+                modalPosition = { left, top };
+            };
+            const up = () => {
+                handle.removeEventListener('pointermove', move);
+                handle.removeEventListener('pointerup', up);
+                handle.removeEventListener('pointercancel', up);
+            };
+            handle.addEventListener('pointermove', move);
+            handle.addEventListener('pointerup', up);
+            handle.addEventListener('pointercancel', up);
+        });
+    }
 
     /**
      * Normalize the string:
@@ -341,6 +522,32 @@
      */
     function normalizeCity(city) {
         return normalizeString$1(city);
+    }
+    /**
+     * Normalize a website URL for WME:
+     *  - drop the query string and hash (tracking params)
+     *  - strip the protocol (`https://`)
+     *  - strip a leading `www.`
+     *  - drop a trailing slash
+     *
+     * Example: `https://www.example.com/a/b.aspx?utm=google` -> `example.com/a/b.aspx`
+     */
+    function normalizeUrl(url) {
+        let value = String(url || '').trim();
+        if (!value)
+            return '';
+        value = value.split('?')[0].split('#')[0];
+        value = value.replace(/^https?:\/\//i, '');
+        value = value.replace(/^www\./i, '');
+        while (value.length > 1 && value.endsWith('/'))
+            value = value.slice(0, -1);
+        return value.trim();
+    }
+    /**
+     * A value is a usable website when it has no spaces and contains a dot.
+     */
+    function isValidUrl(url) {
+        return !!url && !/\s/.test(url) && url.includes('.');
     }
     /**
      * Normalize the street name by UA rules
@@ -487,6 +694,68 @@
         }
     }
 
+    const LOCALE = {
+        // Ukraine
+        232: {
+            country: 'uk',
+            language: 'ua',
+            locale: 'uk_UA'
+        }
+    };
+    // Road Types
+    //   I18n.translations.uk.segment.road_types
+    //   I18n.translations.en.segment.road_types
+    const TYPES = {
+        boardwalk: 10,
+        stairway: 16,
+        railroad: 18,
+        runway: 19,
+        parking: 20};
+
+    const layerConfig = {
+        styleContext: {
+            label: (context) => {
+                const style = context?.feature?.properties?.style;
+                if (!style)
+                    return style;
+                return style?.label;
+            },
+        },
+        styleRules: [
+            {
+                predicate: (properties) => properties.styleName === "styleNode",
+                style: {
+                    pointRadius: 8,
+                    fillOpacity: 0.5,
+                    fillColor: '#fff',
+                    strokeColor: '#fff',
+                    strokeWidth: 2,
+                    strokeLinecap: 'round',
+                    graphicZIndex: 9999,
+                },
+            },
+            {
+                predicate: (properties) => properties.styleName === "styleLine",
+                style: {
+                    strokeWidth: 4,
+                    strokeColor: '#fff',
+                    strokeLinecap: 'round',
+                    strokeDashstyle: 'dash',
+                    label: "${label}",
+                    labelOutlineColor: '#000',
+                    labelOutlineWidth: 3,
+                    labelAlign: 'cm',
+                    fontColor: '#fff',
+                    fontSize: '24px',
+                    fontFamily: 'Courier New, monospace',
+                    fontWeight: 'bold',
+                    labelYOffset: 24,
+                    graphicZIndex: 9999,
+                }
+            }
+        ],
+    };
+
     /**
      * Search the city name from available in the editor area
      */
@@ -518,10 +787,13 @@
         if (streetName.trim() === '') {
             return [null, null];
         }
-        // Get all streets
+        // Get all streets. If the city couldn't be resolved (cityId is null),
+        // fall back to searching all streets instead of matching nothing.
         let streets = wmeSDK.DataModel.Streets.getAll()
-            .filter((street) => street.cityId === cityId)
             .filter((street) => street.name);
+        if (cityId !== null && cityId !== undefined) {
+            streets = streets.filter((street) => street.cityId === cityId);
+        }
         // Get type and create RegExp for filter streets
         let reTypes = new RegExp('(алея|б-р|в\'їзд|вул\\.|дор\\.|мкрн|наб\\.|площа|пров\\.|проїзд|просп\\.|р-н|ст\\.|тракт|траса|тупик|узвіз|шосе)', 'gi');
         let matches = [...streetName.matchAll(reTypes)];
@@ -1066,16 +1338,51 @@
     class GoogleProvider extends Provider {
         constructor(container, settings, scriptSettings, wmeSDK, key) {
             super(WMEUI.t(NAME).providers.google, container, settings, scriptSettings, wmeSDK);
+            // Live PlacesService pagination object (JS API: { hasNextPage, nextPage() })
+            this.pagination = null;
+            this.loading = false;
+            this.fieldset = null;
+            this.service = null;
+            this.resolvePage = null;
+            this.rejectPage = null;
+            /**
+             * Routes both the first page and any later `pagination.nextPage()` page into
+             * the promise that is currently awaiting results.
+             */
+            this.onPage = (results, status, pagination) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    this.pagination = pagination;
+                    this.resolvePage?.(results);
+                }
+                else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                    this.pagination = null;
+                    this.resolvePage?.([]);
+                }
+                else {
+                    this.rejectPage?.(status);
+                }
+            };
             this.key = key;
         }
+        /**
+         * Google's pagination object is live and cannot be cached, so this provider
+         * bypasses the shared cache and always fetches a fresh first page.
+         */
+        async search(lon, lat, radius = 1000) {
+            this.query = { lon, lat, radius };
+            this.response = await this.request(lon, lat, radius).catch(() => []);
+        }
         async request(lon, lat, radius) {
-            let result = [];
-            let response = await this.makeAPIRequest(lat, lon, radius)
-                .catch(e => null);
-            //.catch(e => console.error(this.uid, 'return error', e))
+            this.pagination = null;
+            let results = await this.searchPage({
+                location: new google.maps.LatLng(lat, lon),
+                radius: radius,
+                type: 'point_of_interest',
+            }).catch(e => null);
             console.groupCollapsed(this.uid);
-            if (response?.length) {
-                result = this.collection(response);
+            let result = [];
+            if (results?.length) {
+                result = this.sortByDistance(this.collection(results), lon, lat, radius);
             }
             else {
                 console.info('No response returned');
@@ -1083,28 +1390,119 @@
             console.groupEnd();
             return result;
         }
-        async makeAPIRequest(lat, lon, radius) {
-            let center = new google.maps.LatLng(lat, lon);
-            let map = new google.maps.Map(document.createElement('div'), { center: center });
-            let request = {
-                location: center,
-                radius: radius,
-                type: 'point_of_interest',
-                // doesn't work
-                // fields: ['name', 'address_component', 'geometry'],
-                // language: this.settings.country,
-            };
-            let service = new google.maps.places.PlacesService(map);
+        /**
+         * Google returns places by prominence and treats `radius` as a bias, so it may
+         * return places outside it. Keep only the ones inside the radius, sorted by
+         * distance from the searched point (the venue centroid).
+         */
+        sortByDistance(items, lon, lat, radius) {
+            let center = turf.point([lon, lat]);
+            for (let item of items) {
+                item.distance = turf.distance(center, turf.point([item.lon, item.lat]), { units: 'meters' });
+            }
+            return items
+                .filter(item => item.distance <= radius)
+                .sort((a, b) => a.distance - b.distance);
+        }
+        /**
+         * Run a Nearby Search page. Google returns at most 20 places per request and
+         * caps a search at 60, so further pages must be pulled by the user.
+         */
+        searchPage(request) {
+            if (!this.service) {
+                let map = new google.maps.Map(document.createElement('div'));
+                this.service = new google.maps.places.PlacesService(map);
+            }
             return new Promise((resolve, reject) => {
-                service.nearbySearch(request, (results, status) => {
-                    if (status === google.maps.places.PlacesServiceStatus.OK) {
-                        resolve(results);
-                    }
-                    else {
-                        reject(status);
-                    }
-                });
+                this.resolvePage = resolve;
+                this.rejectPage = reject;
+                this.service.nearbySearch(request, this.onPage);
             });
+        }
+        /**
+         * Add the "Load more" row when another page is available
+         */
+        _fieldset() {
+            let fieldset = super._fieldset();
+            this.fieldset = fieldset;
+            if (this.pagination?.hasNextPage) {
+                this.addLoadMore(fieldset);
+            }
+            return fieldset;
+        }
+        addLoadMore(fieldset) {
+            let list = fieldset.querySelector('ul');
+            if (!list)
+                return;
+            let li = document.createElement('li');
+            let link = document.createElement('a');
+            link.href = '#';
+            link.className = NAME.toLowerCase() + '-load-more';
+            link.innerText = WMEUI.t(NAME).loadMore;
+            link.onclick = (event) => {
+                event.preventDefault();
+                this.loadMore(link);
+                return false;
+            };
+            li.append(link);
+            list.append(li);
+        }
+        /**
+         * Fetch and append the next page of places
+         */
+        async loadMore(link) {
+            if (this.loading || !this.pagination?.hasNextPage)
+                return;
+            this.loading = true;
+            let list = this.fieldset?.querySelector('ul');
+            let label = link.innerText;
+            link.innerText = WMEUI.t(NAME).loading;
+            try {
+                // nextPage() re-invokes the callback registered with the first search
+                let results = await new Promise((resolve, reject) => {
+                    this.resolvePage = resolve;
+                    this.rejectPage = reject;
+                    this.pagination.nextPage();
+                });
+                let seen = new Set(this.response.map((x) => x.reference));
+                for (let res of results) {
+                    if (!res.place_id || seen.has(res.place_id))
+                        continue;
+                    seen.add(res.place_id);
+                    this.response.push(this.item(res));
+                }
+                // Keep the whole list within the radius, in distance order; rebuild it,
+                // leaving the "Load more" row last
+                this.response = this.sortByDistance(this.response, this.query.lon, this.query.lat, this.query.radius);
+                if (list && link.parentElement) {
+                    let loadMore = link.parentElement;
+                    for (let li of Array.from(list.children)) {
+                        if (li !== loadMore)
+                            li.remove();
+                    }
+                    for (let item of this.response) {
+                        let li = document.createElement('li');
+                        li.append(this._link(item));
+                        list.insertBefore(li, loadMore);
+                    }
+                }
+                let count = this.fieldset?.querySelector('legend span');
+                if (count)
+                    count.textContent = String(this.response.length);
+                if (this.pagination?.hasNextPage) {
+                    link.innerText = label;
+                }
+                else if (link.parentElement) {
+                    link.parentElement.remove();
+                }
+            }
+            catch (e) {
+                console.warn('Google: could not load more places', e);
+                link.innerText = label;
+            }
+            finally {
+                this.loading = false;
+            }
         }
         item(res) {
             let address = res.vicinity.split(',');
@@ -1113,7 +1511,7 @@
             let street = address[0] && address[0].length > 4 ? address[0] : '';
             let number = address[1] && address[1].length < 13 ? address[1] : '';
             let city = address[2] ? address[2] : '';
-            return this.element(res.geometry.location.lng(), res.geometry.location.lat(), city, street, number, res.name, res.reference);
+            return this.element(res.geometry.location.lng(), res.geometry.location.lat(), city, street, number, res.name, res.place_id || res.reference);
         }
         /**
          * Details about a specific object or entity.
@@ -1129,7 +1527,10 @@
             let request = {
                 placeId: reference, // Google now uses placeId instead of reference
                 // Specifying fields is cheaper and faster
-                fields: ['business_status', 'geometry', 'name', 'place_id', 'vicinity']
+                fields: [
+                    'business_status', 'geometry', 'name', 'place_id', 'vicinity',
+                    'formatted_phone_number', 'international_phone_number', 'website', 'opening_hours'
+                ]
             };
             return new Promise((resolve, reject) => {
                 service.getDetails(request, (place, status) => {
@@ -1142,6 +1543,99 @@
                 });
             });
         }
+    }
+    /**
+     * Convert Google `opening_hours.periods` into the WME SDK shape:
+     * `[{ days: [0..6], fromHour: "HH:MM", toHour: "HH:MM" }]`
+     * (day 0 = Sunday … 6 = Saturday, same as Google).
+     *
+     * WME rejects overlapping ranges on the same day, but Google sometimes lists
+     * both an all-day and a timed period for the same day (e.g. 24/7 chains), so
+     * same-day overlaps are resolved (all-day wins, otherwise the widest range).
+     */
+    function parseOpeningHours(place) {
+        const periods = place?.opening_hours?.periods;
+        if (!Array.isArray(periods) || !periods.length)
+            return null;
+        const toTime = (value) => {
+            const s = String(value ?? '').padStart(4, '0');
+            return /^\d{4}$/.test(s) ? s.slice(0, 2) + ':' + s.slice(2) : null;
+        };
+        const expanded = [];
+        for (const period of periods) {
+            const open = period?.open;
+            const close = period?.close;
+            if (!open || typeof open.day !== 'number')
+                continue;
+            const fromHour = toTime(open.time);
+            if (!fromHour)
+                continue;
+            // No closing time means 24/7
+            if (!close)
+                return [{ days: [0, 1, 2, 3, 4, 5, 6], fromHour: '00:00', toHour: '00:00' }];
+            if (typeof close.day !== 'number')
+                continue;
+            const toHour = toTime(close.time);
+            if (!toHour)
+                continue;
+            if (open.day === close.day) {
+                const allDay = open.time === close.time;
+                expanded.push({ day: open.day, fromHour: allDay ? '00:00' : fromHour, toHour: allDay ? '00:00' : toHour });
+                continue;
+            }
+            // Overnight: open day until end, intermediate days full, close day from start
+            expanded.push({ day: open.day, fromHour, toHour: '23:59' });
+            let day = (open.day + 1) % 7;
+            let guard = 0;
+            while (day !== close.day && guard < 7) {
+                expanded.push({ day, fromHour: '00:00', toHour: '23:59' });
+                day = (day + 1) % 7;
+                guard++;
+            }
+            expanded.push({ day: close.day, fromHour: '00:00', toHour });
+        }
+        // Group identical time ranges
+        const grouped = new Map();
+        for (const item of expanded) {
+            const key = item.fromHour + '|' + item.toHour;
+            if (!grouped.has(key))
+                grouped.set(key, { days: [], fromHour: item.fromHour, toHour: item.toHour });
+            grouped.get(key).days.push(item.day);
+        }
+        const entries = [...grouped.values()].map(e => ({ ...e, days: [...new Set(e.days)] }));
+        // Resolve same-day overlaps: an all-day entry wins, otherwise the widest
+        const isAllDay = (e) => e.fromHour === '00:00' && e.toHour === '00:00';
+        const minutes = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+        for (let day = 0; day <= 6; day++) {
+            const owners = entries.filter(e => e.days.includes(day));
+            if (owners.length <= 1)
+                continue;
+            let winner = owners.find(isAllDay) || owners[0];
+            for (const e of owners) {
+                if (isAllDay(winner))
+                    break;
+                const best = isAllDay(winner) ? 1440 : minutes(winner.toHour) - minutes(winner.fromHour);
+                const wide = isAllDay(e) ? 1440 : minutes(e.toHour) - minutes(e.fromHour);
+                if (wide > best)
+                    winner = e;
+            }
+            for (const e of owners)
+                if (e !== winner)
+                    e.days = e.days.filter((d) => d !== day);
+        }
+        // Re-group after overlap removal, drop empties, sort deterministically
+        const merged = new Map();
+        for (const e of entries) {
+            if (!e.days.length)
+                continue;
+            const key = e.fromHour + '|' + e.toHour;
+            if (!merged.has(key))
+                merged.set(key, { days: [], fromHour: e.fromHour, toHour: e.toHour });
+            merged.get(key).days.push(...e.days);
+        }
+        return [...merged.values()]
+            .map(e => ({ days: [...new Set(e.days)].sort((a, b) => a - b), fromHour: e.fromHour, toHour: e.toHour }))
+            .sort((a, b) => (a.fromHour + a.toHour).localeCompare(b.fromHour + b.toHour));
     }
 
     class E50 extends WMEBase {
@@ -1166,7 +1660,13 @@
                 if (options.hasOwnProperty(item)) {
                     checkboxes[item] = {
                         title: WMEUI.t(NAME).options[item],
-                        callback: (event) => this.settings.set('options', item, event.target.checked),
+                        callback: (event) => {
+                            this.settings.set('options', item, event.target.checked);
+                            // The Google import options are children of the Google link option
+                            if (item === 'linkGoogle') {
+                                this.syncGoogleOptions();
+                            }
+                        },
                         checked: this.settings.get('options', item),
                     };
                 }
@@ -1220,7 +1720,7 @@
             tab.addText('info', '<a href="' + GM_info.scriptUpdateURL + '">' + GM_info.script.name + '</a> ' + GM_info.script.version);
             tab.addText('blue', 'made in');
             tab.addText('yellow', 'Ukraine');
-            tab.inject();
+            tab.inject().then(() => this.syncGoogleOptions());
         }
         initLayer() {
             this.wmeSDK.Map.addLayer({
@@ -1432,6 +1932,7 @@
                     parent.onmouseover = () => (parent.style.opacity = '1');
                     parent.onmouseout = () => (parent.style.opacity = '0.6');
                 }
+                makeDraggable(parent);
                 this.modal.container().append(parent);
             }
             else {
@@ -1701,7 +2202,72 @@
                     navigationPoints: [navigationPoint]
                 });
             }
+            // Apply Google phone / website / opening hours (only Google results carry a reference)
+            if (data.reference) {
+                this.applyGoogleData(venue, data.reference);
+            }
             this.groupEnd();
+        }
+        /**
+         * Enable/disable the Google import checkboxes. They are children of
+         * "Auto-link Google place" and only make sense while it is enabled.
+         */
+        syncGoogleOptions() {
+            const uid = WMEUI.normalize(NAME);
+            const disabled = !this.settings.get('options', 'linkGoogle');
+            for (const option of ['addPhone', 'addWebsite', 'addOpeningHours']) {
+                const input = document.getElementById(uid + '-' + option);
+                if (input)
+                    input.disabled = disabled;
+            }
+        }
+        /**
+         * Fetch Google place details and apply phone / website / opening hours when
+         * the matching option is enabled. `updateVenue` replaces `openingHours`, so
+         * the full parsed set is sent in a single call.
+         */
+        async applyGoogleData(venue, reference) {
+            // These options are children of "Auto-link Google place"
+            if (!this.settings.get('options', 'linkGoogle'))
+                return;
+            const enabled = ['addPhone', 'addWebsite', 'addOpeningHours']
+                .filter(option => this.settings.get('options', option));
+            if (!enabled.length)
+                return;
+            const details = await GoogleProvider.makeDetailsRequest(reference).catch(() => null);
+            if (!details)
+                return;
+            const update = {};
+            if (this.settings.get('options', 'addPhone')) {
+                const phone = String(details.international_phone_number || details.formatted_phone_number || '').trim();
+                if (phone && phone !== String(venue.phone || '').trim())
+                    update.phone = phone;
+            }
+            if (this.settings.get('options', 'addWebsite')) {
+                // Normalize both sides: WME stores the bare "example.com/path" form
+                const url = normalizeUrl(details.website);
+                if (isValidUrl(url) && url !== normalizeUrl(venue.url))
+                    update.url = url;
+            }
+            if (this.settings.get('options', 'addOpeningHours')) {
+                const hours = parseOpeningHours(details);
+                if (hours?.length && JSON.stringify(hours) !== JSON.stringify(venue.openingHours || [])) {
+                    update.openingHours = hours;
+                }
+            }
+            const fields = Object.keys(update);
+            if (!fields.length)
+                return;
+            // Ask before overwriting any existing value
+            const overwrite = fields.filter(field => {
+                const current = venue[field];
+                return Array.isArray(current) ? current.length > 0 : !!current;
+            });
+            if (overwrite.length && !window.confirm(WMEUI.t(NAME).questions.changeGoogle + '\n' + overwrite.join(', '))) {
+                return;
+            }
+            this.log('Apply Google data \u00AB' + fields.join(', ') + '\u00BB');
+            this.wmeSDK.DataModel.Venues.updateVenue({ venueId: venue.id, ...update });
         }
         getCityById(cityID) {
             if (!cityID || isNaN(parseInt(cityID))) {
@@ -1755,172 +2321,7 @@
         return str;
     }
 
-    let E50Instance;
-    function setE50Instance(instance) {
-        E50Instance = instance;
-    }
-    /**
-     * Apply data to the current selected POI
-     */
-    function applyData(event) {
-        event.preventDefault();
-        E50Instance.applyData(event.target.dataset);
-        // If the clicked result came from the Google provider (it carries a Google
-        // place reference), also link it as the venue's external (Google) place by
-        // driving WME's own UI — but only when the "Auto-link Google place"
-        // option is enabled.
-        if (event.target.dataset.reference && E50Instance.settings.get('options', 'linkGoogle')) {
-            linkExternalProvider(event.target.dataset);
-        }
-    }
-    /**
-     * Recursively search for `selector` in the light DOM and inside the shadow
-     * roots of any custom elements. WME's UI is built from web components, so the
-     * real button/input live inside shadow roots.
-     */
-    function queryInShadows(root, selector) {
-        const direct = root.querySelector(selector);
-        if (direct) {
-            return direct;
-        }
-        const hosts = root.querySelectorAll('*');
-        for (let i = 0; i < hosts.length; i++) {
-            const host = hosts[i];
-            if (host.shadowRoot) {
-                const hit = queryInShadows(host.shadowRoot, selector);
-                if (hit) {
-                    return hit;
-                }
-            }
-        }
-        return null;
-    }
-    /**
-     * Same as queryInShadows but returns ALL matches (light DOM + shadow roots),
-     * in document order. Useful when multiple elements share a selector.
-     */
-    function queryInShadowsAll(root, selector) {
-        const results = [];
-        const collect = (r) => {
-            r.querySelectorAll(selector).forEach((el) => results.push(el));
-            const hosts = r.querySelectorAll('*');
-            for (let i = 0; i < hosts.length; i++) {
-                const host = hosts[i];
-                if (host.shadowRoot) {
-                    collect(host.shadowRoot);
-                }
-            }
-        };
-        collect(root);
-        return results;
-    }
-    /**
-     * Poll `fn` until it returns a truthy value or `timeout` ms elapse.
-     */
-    function waitFor(fn, timeout = 8000, interval = 150) {
-        return new Promise((resolve, reject) => {
-            const start = Date.now();
-            const tick = () => {
-                let result;
-                try {
-                    result = fn();
-                }
-                catch (e) {
-                    result = null;
-                }
-                if (result) {
-                    resolve(result);
-                    return;
-                }
-                if (Date.now() - start > timeout) {
-                    reject(new Error('waitFor: timed out'));
-                    return;
-                }
-                setTimeout(tick, interval);
-            };
-            tick();
-        });
-    }
-    /**
-     * Link the Google place from a Google-provider result to the currently
-     * selected venue by driving WME's own "+ Add linked Google place" UI:
-     *   1. click the add button
-     *   2. type the POI name into the search box
-     *   3. click the top autocomplete result
-     *
-     * NOTE: this drives WME's internal DOM (web components with shadow roots).
-     * The selectors below are best-effort and may need adjusting if WME changes
-     * its markup. Failures are logged but never break the address apply.
-     */
-    async function linkExternalProvider(data) {
-        try {
-            const reference = data.reference;
-            const name = data.name;
-            // WME links by searching a text query (name + address), not the place ID.
-            const searchQuery = data.query || name;
-            if (!reference || !searchQuery) {
-                return;
-            }
-            const venue = E50Instance.getSelectedPOI();
-            if (!venue || !E50Instance.canEditVenue(venue)) {
-                return;
-            }
-            // Skip if this Google place is already linked
-            const model = E50Instance.wmeSDK.DataModel.Venues.getById({ venueId: venue.id });
-            if (model && model.externalProviderIds && model.externalProviderIds.indexOf(reference) > -1) {
-                console.info('Google place is already linked');
-                return;
-            }
-            // 1. Click "+ Add linked Google place"
-            const addButton = await waitFor(() => queryInShadows(document, 'wz-button.external-provider-add-new'));
-            addButton.click();
-            // 2. Fill the "Search for a place" input. Use the native setter so the
-            //    component's value binding updates, then dispatch an input event.
-            const input = await waitFor(() => queryInShadows(document, 'input[placeholder="Search for a place"]'));
-            const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
-            if (valueSetter && valueSetter.set) {
-                valueSetter.set.call(input, searchQuery || '');
-            }
-            else {
-                input.value = searchQuery || '';
-            }
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            // 3. Wait for the autocomplete dropdown. Each result is a
-            //    "wz-menu-item.simple-item" that carries the Google place ID in its
-            //    "item-id" attribute. Prefer the exact place; otherwise use the top
-            //    result.
-            const resultEl = await waitFor(() => {
-                const items = queryInShadowsAll(document, 'wz-menu-item.simple-item');
-                if (!items.length) {
-                    return null;
-                }
-                return items.find((el) => el.getAttribute('item-id') === reference) || items[0];
-            });
-            resultEl.click();
-            console.info('✅ Google place linked as external provider');
-        }
-        catch (e) {
-            console.warn('Could not auto-link the Google place (WME UI may have changed)', e);
-        }
-    }
-    /**
-     * Create the vector from the center of the selected POI to point by lon and lat
-     */
-    function showLayer(event) {
-        const lon = parseFloat(event.target.dataset.lon);
-        const lat = parseFloat(event.target.dataset.lat);
-        E50Instance.createVector(lon, lat);
-        E50Instance.showLayer();
-    }
-    /**
-     * Remove all vectors and hide the layer
-     */
-    function hideLayer() {
-        E50Instance.removeVectors();
-        E50Instance.hideLayer();
-    }
-
-    var css_248z = ".wme-ui-modal.e50 .wme-ui-modal-header h5 {\r\n  padding: 16px 16px 0;\r\n  font-size: 16px;\r\n}\r\n\r\n.wme-ui-modal.e50 .wme-ui-modal-content {\r\n  overflow-x: auto;\r\n  max-height: 420px;\r\n  padding: 4px 0;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset {\r\n  border: 0;\r\n  padding: 0;\r\n  margin: 0;\r\n}\r\n\r\n#venue-edit-general .e50 legend {\r\n  width: 100%;\r\n  text-align: left;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset legend,\r\n.wme-ui-panel.e50 fieldset legend,\r\n.wme-ui-modal.e50 fieldset legend {\r\n  cursor: pointer;\r\n  font-size: 12px;\r\n  font-weight: bold;\r\n  margin: 0;\r\n  padding: 0 8px;\r\n  background-color: #f6f7f7;\r\n  border: 1px solid #e5e5e5;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset legend::after,\r\n.wme-ui-panel.e50 fieldset legend::after,\r\n.wme-ui-modal.e50 fieldset legend::after {\r\n  display: inline-block;\r\n  text-rendering: auto;\r\n  content: \"\\2191\";\r\n  float: right;\r\n  font-size: 10px;\r\n  line-height: inherit;\r\n  position: relative;\r\n  right: 3px;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset legend span,\r\n.wme-ui-panel.e50 fieldset legend span,\r\n.wme-ui-modal.e50 fieldset legend span {\r\n  font-weight: bold;\r\n  background-color: #fff;\r\n  border-radius: 5px;\r\n  color: #ed503b;\r\n  display: inline-block;\r\n  font-size: 12px;\r\n  line-height: 14px;\r\n  max-width: 30px;\r\n  padding: 1px 5px;\r\n  text-align: center;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset ul,\r\n.wme-ui-panel.e50 fieldset ul,\r\n.wme-ui-modal.e50 fieldset ul {\r\n  border: 1px solid #ddd;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset.collapsed ul,\r\n.wme-ui-panel.e50 fieldset.collapsed ul,\r\n.wme-ui-modal.e50 fieldset.collapsed ul {\r\n  display: none;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset.collapsed legend::after,\r\n.wme-ui-panel.e50 fieldset.collapsed legend::after,\r\n.wme-ui-modal.e50 fieldset.collapsed legend::after {\r\n  content: \"\\2193\";\r\n}\r\n\r\n#venue-edit-general .e50 ul,\r\n.wme-ui-panel.e50 ul,\r\n.wme-ui-modal.e50 ul {\r\n  padding: 8px;\r\n  margin: 0;\r\n}\r\n\r\n#venue-edit-general .e50 li,\r\n.wme-ui-panel.e50 li,\r\n.wme-ui-modal.e50 li {\r\n  padding: 0;\r\n  margin: 0;\r\n  list-style: none;\r\n  margin-bottom: 2px;\r\n}\r\n\r\n#venue-edit-general .e50 li a,\r\n.wme-ui-panel.e50 li a,\r\n.wme-ui-modal.e50 li a {\r\n  display: block;\r\n  padding: 2px 4px;\r\n  text-decoration: none;\r\n  border: 1px solid #e4e4e4;\r\n}\r\n\r\n#venue-edit-general .e50 li a:hover,\r\n.wme-ui-panel.e50 li a:hover,\r\n.wme-ui-modal.e50 li a:hover {\r\n  background: rgba(255, 255, 200, 1);\r\n}\r\n\r\n#venue-edit-general .e50 li a.nonumber,\r\n.wme-ui-panel.e50 li a.nonumber,\r\n.wme-ui-modal.e50 li a.nonumber {\r\n  background: rgba(250, 250, 200, 0.5);\r\n}\r\n\r\n#venue-edit-general .e50 li a.nonumber:hover,\r\n.wme-ui-panel.e50 li a.nonumber:hover,\r\n.wme-ui-modal.e50 li a.nonumber:hover {\r\n  background: rgba(250, 250, 200, 1);\r\n}\r\n\r\n#venue-edit-general .e50 li a.noaddress,\r\n.wme-ui-panel.e50 li a.noaddress,\r\n.wme-ui-modal.e50 li a.noaddress {\r\n  background: rgba(250, 200, 100, 0.5);\r\n}\r\n\r\n#venue-edit-general .e50 li a.noaddress:hover,\r\n.wme-ui-panel.e50 li a.noaddress:hover,\r\n.wme-ui-modal.e50 li a.noaddress:hover {\r\n  background: rgba(250, 200, 100, 1);\r\n}\r\n\r\n.wme-ui-panel.e50 .wme-ui-fieldset-content:empty,\r\n.wme-ui-modal.e50 .wme-ui-modal-content:empty {\r\n  min-height: 20px;\r\n}\r\n\r\n.wme-ui-panel.e50 .wme-ui-fieldset-content:empty::after,\r\n.wme-ui-modal.e50 .wme-ui-modal-content:empty::after {\r\n  color: #ccc;\r\n  padding: 0 8px;\r\n  content: \"\\2014\";\r\n}\r\n\r\n.wme-ui-panel.e50 .wme-ui-fieldset-content label {\r\n  margin-top: 5px;\r\n  line-height: 18px;\r\n}\r\n\r\n.wme-ui-panel.e50 .wme-ui-fieldset-content input[type=\"text\"] {\r\n  float: right;\r\n}\r\n\r\n.distance-over-200 {\r\n  background-color: #f08a24;\r\n}\r\n\r\n.distance-over-1000 {\r\n  background-color: #ed503b;\r\n}\r\n\r\n.external-operational a.url {\r\n  border: 4px solid #009900;\r\n  border-radius: 50%;\r\n}\r\n\r\n.external-closed-temporarily a.url {\r\n  border: 4px solid #ff7300;\r\n  border-radius: 50%;\r\n}\r\n\r\n.external-closed-permanently a.url {\r\n  border: 4px solid #ff0000;\r\n  border-radius: 50%;\r\n}\r\n\r\n.e50 .wme-ui-tab-content {\r\n  padding: 8px;\r\n}\r\n\r\np.e50-info {\r\n  border-top: 1px solid #ccc;\r\n  color: #777;\r\n  font-size: x-small;\r\n  margin-top: 15px;\r\n  padding-top: 10px;\r\n  text-align: center;\r\n}\r\n\r\n#sidebar p.e50-blue {\r\n  background-color: #0057B8;\r\n  color: white;\r\n  height: 32px;\r\n  text-align: center;\r\n  line-height: 32px;\r\n  font-size: 24px;\r\n  margin: 0;\r\n}\r\n\r\n#sidebar p.e50-yellow {\r\n  background-color: #FFDD00;\r\n  color: black;\r\n  height: 32px;\r\n  text-align: center;\r\n  line-height: 32px;\r\n  font-size: 24px;\r\n  margin: 0;\r\n}\r\n";
+    var css_248z = ".wme-ui-modal.e50 .wme-ui-modal-header h5 {\r\n  padding: 16px 16px 0;\r\n  font-size: 16px;\r\n}\r\n\r\n.wme-ui-modal.e50 .wme-ui-modal-content {\r\n  overflow-x: auto;\r\n  max-height: 420px;\r\n  padding: 4px 0;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset {\r\n  border: 0;\r\n  padding: 0;\r\n  margin: 0;\r\n}\r\n\r\n#venue-edit-general .e50 legend {\r\n  width: 100%;\r\n  text-align: left;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset legend,\r\n.wme-ui-panel.e50 fieldset legend,\r\n.wme-ui-modal.e50 fieldset legend {\r\n  cursor: pointer;\r\n  font-size: 12px;\r\n  font-weight: bold;\r\n  margin: 0;\r\n  padding: 0 8px;\r\n  background-color: #f6f7f7;\r\n  border: 1px solid #e5e5e5;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset legend::after,\r\n.wme-ui-panel.e50 fieldset legend::after,\r\n.wme-ui-modal.e50 fieldset legend::after {\r\n  display: inline-block;\r\n  text-rendering: auto;\r\n  content: \"\\2191\";\r\n  float: right;\r\n  font-size: 10px;\r\n  line-height: inherit;\r\n  position: relative;\r\n  right: 3px;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset legend span,\r\n.wme-ui-panel.e50 fieldset legend span,\r\n.wme-ui-modal.e50 fieldset legend span {\r\n  font-weight: bold;\r\n  background-color: #fff;\r\n  border-radius: 5px;\r\n  color: #ed503b;\r\n  display: inline-block;\r\n  font-size: 12px;\r\n  line-height: 14px;\r\n  max-width: 30px;\r\n  padding: 1px 5px;\r\n  text-align: center;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset ul,\r\n.wme-ui-panel.e50 fieldset ul,\r\n.wme-ui-modal.e50 fieldset ul {\r\n  border: 1px solid #ddd;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset.collapsed ul,\r\n.wme-ui-panel.e50 fieldset.collapsed ul,\r\n.wme-ui-modal.e50 fieldset.collapsed ul {\r\n  display: none;\r\n}\r\n\r\n#venue-edit-general .e50 fieldset.collapsed legend::after,\r\n.wme-ui-panel.e50 fieldset.collapsed legend::after,\r\n.wme-ui-modal.e50 fieldset.collapsed legend::after {\r\n  content: \"\\2193\";\r\n}\r\n\r\n#venue-edit-general .e50 ul,\r\n.wme-ui-panel.e50 ul,\r\n.wme-ui-modal.e50 ul {\r\n  padding: 8px;\r\n  margin: 0;\r\n}\r\n\r\n#venue-edit-general .e50 li,\r\n.wme-ui-panel.e50 li,\r\n.wme-ui-modal.e50 li {\r\n  padding: 0;\r\n  margin: 0;\r\n  list-style: none;\r\n  margin-bottom: 2px;\r\n}\r\n\r\n#venue-edit-general .e50 li a,\r\n.wme-ui-panel.e50 li a,\r\n.wme-ui-modal.e50 li a {\r\n  display: block;\r\n  padding: 2px 4px;\r\n  text-decoration: none;\r\n  border: 1px solid #e4e4e4;\r\n}\r\n\r\n#venue-edit-general .e50 li a:hover,\r\n.wme-ui-panel.e50 li a:hover,\r\n.wme-ui-modal.e50 li a:hover {\r\n  background: rgba(255, 255, 200, 1);\r\n}\r\n\r\n#venue-edit-general .e50 li a.nonumber,\r\n.wme-ui-panel.e50 li a.nonumber,\r\n.wme-ui-modal.e50 li a.nonumber {\r\n  background: rgba(250, 250, 200, 0.5);\r\n}\r\n\r\n#venue-edit-general .e50 li a.nonumber:hover,\r\n.wme-ui-panel.e50 li a.nonumber:hover,\r\n.wme-ui-modal.e50 li a.nonumber:hover {\r\n  background: rgba(250, 250, 200, 1);\r\n}\r\n\r\n#venue-edit-general .e50 li a.noaddress,\r\n.wme-ui-panel.e50 li a.noaddress,\r\n.wme-ui-modal.e50 li a.noaddress {\r\n  background: rgba(250, 200, 100, 0.5);\r\n}\r\n\r\n#venue-edit-general .e50 li a.noaddress:hover,\r\n.wme-ui-panel.e50 li a.noaddress:hover,\r\n.wme-ui-modal.e50 li a.noaddress:hover {\r\n  background: rgba(250, 200, 100, 1);\r\n}\r\n\r\n.wme-ui-panel.e50 .wme-ui-fieldset-content:empty,\r\n.wme-ui-modal.e50 .wme-ui-modal-content:empty {\r\n  min-height: 20px;\r\n}\r\n\r\n.wme-ui-panel.e50 .wme-ui-fieldset-content:empty::after,\r\n.wme-ui-modal.e50 .wme-ui-modal-content:empty::after {\r\n  color: #ccc;\r\n  padding: 0 8px;\r\n  content: \"\\2014\";\r\n}\r\n\r\n.wme-ui-panel.e50 .wme-ui-fieldset-content label {\r\n  margin-top: 5px;\r\n  line-height: 18px;\r\n}\r\n\r\n.wme-ui-panel.e50 .wme-ui-fieldset-content input[type=\"text\"] {\r\n  float: right;\r\n}\r\n\r\n.distance-over-200 {\r\n  background-color: #f08a24;\r\n}\r\n\r\n.distance-over-1000 {\r\n  background-color: #ed503b;\r\n}\r\n\r\n.external-operational a.url {\r\n  border: 4px solid #009900;\r\n  border-radius: 50%;\r\n}\r\n\r\n.external-closed-temporarily a.url {\r\n  border: 4px solid #ff7300;\r\n  border-radius: 50%;\r\n}\r\n\r\n.external-closed-permanently a.url {\r\n  border: 4px solid #ff0000;\r\n  border-radius: 50%;\r\n}\r\n\r\n.e50 .wme-ui-tab-content {\r\n  padding: 8px;\r\n}\r\n\r\np.e50-info {\r\n  border-top: 1px solid #ccc;\r\n  color: #777;\r\n  font-size: x-small;\r\n  margin-top: 15px;\r\n  padding-top: 10px;\r\n  text-align: center;\r\n}\r\n\r\n#sidebar p.e50-blue {\r\n  background-color: #0057B8;\r\n  color: white;\r\n  height: 32px;\r\n  text-align: center;\r\n  line-height: 32px;\r\n  font-size: 24px;\r\n  margin: 0;\r\n}\r\n\r\n#sidebar p.e50-yellow {\r\n  background-color: #FFDD00;\r\n  color: black;\r\n  height: 32px;\r\n  text-align: center;\r\n  line-height: 32px;\r\n  font-size: 24px;\r\n  margin: 0;\r\n}\r\n\r\n/* Google import options are children of \"Auto-link Google place\" */\r\n.e50-addPhone,\r\n.e50-addWebsite,\r\n.e50-addOpeningHours {\r\n  margin-left: 20px;\r\n}\r\n\r\n.e50-addPhone:has(input:disabled),\r\n.e50-addWebsite:has(input:disabled),\r\n.e50-addOpeningHours:has(input:disabled) {\r\n  opacity: 0.5;\r\n}\r\n\r\n/* Google \"Load more\" row, styled as a small button */\r\n.wme-ui-modal.e50 li a.e50-load-more,\r\n.wme-ui-panel.e50 li a.e50-load-more {\r\n  background: #2e7d32;\r\n  border-color: #2e7d32;\r\n  border-radius: 3px;\r\n  color: #fff;\r\n  font-size: 11px;\r\n  font-weight: bold;\r\n  margin: 2px auto 0;\r\n  padding: 2px 8px;\r\n  text-align: center;\r\n  width: fit-content;\r\n}\r\n\r\n.wme-ui-modal.e50 li a.e50-load-more:hover,\r\n.wme-ui-panel.e50 li a.e50-load-more:hover {\r\n  background: #256428;\r\n  border-color: #256428;\r\n  color: #fff;\r\n}\r\n";
 
     $(document)
         .on('bootstrap.wme', () => {

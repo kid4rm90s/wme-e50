@@ -2,6 +2,8 @@ export const TRANSLATION: Record<string, any> = {
   'en': {
     title: 'Information 📍',
     notFound: 'Not found',
+    loadMore: 'Load more…',
+    loading: 'Loading…',
     options: {
       title: 'Options',
       modal: 'Use modal window',
@@ -12,6 +14,9 @@ export const TRANSLATION: Record<string, any> = {
       lock: 'Lock POI to 2 level',
       addHouseNumber: 'Auto-add House Number',
       linkGoogle: 'Auto-link Google place',
+      addPhone: 'Auto-add Phone from Gmaps',
+      addWebsite: 'Auto-add Website',
+      addOpeningHours: 'Auto-add Opening Hours',
       keys: 'API keys',
     },
     format: {
@@ -40,12 +45,15 @@ export const TRANSLATION: Record<string, any> = {
       changeStreet: 'Are you sure to change the street name?',
       changeNumber: 'Are you sure to change the house number?',
       notFoundCity: 'City not found in the current location, are you sure to create a new one?',
-      notFoundStreet: 'Street not found in the current location, are you sure to create a new one?'
+      notFoundStreet: 'Street not found in the current location, are you sure to create a new one?',
+      changeGoogle: 'Are you sure to replace the existing Google data?',
     }
   },
   'uk': {
     title: 'Інформація 📍',
     notFound: 'Нічого не знайдено',
+    loadMore: 'Показати більше…',
+    loading: 'Завантаження…',
     options: {
       title: 'Налаштування',
       modal: 'Використовувати окрему панель',
@@ -56,6 +64,9 @@ export const TRANSLATION: Record<string, any> = {
       lock: 'Блокувати POI 2-м рівнем',
       addHouseNumber: 'Автоматично додавати номер будинку',
       linkGoogle: 'Автоматично пов\'язувати місце Google',
+      addPhone: 'Автоматично додавати телефон з Gmaps',
+      addWebsite: 'Автоматично додавати вебсайт',
+      addOpeningHours: 'Автоматично додавати години роботи',
       keys: 'Ключі до API',
     },
     format: {
@@ -85,11 +96,14 @@ export const TRANSLATION: Record<string, any> = {
       changeNumber: 'Ви впевненні що хочете змінити номер дома?',
       notFoundCity: 'Ми не знайшли такого міста у поточному місці, ви впевнені, що треба його додати?',
       notFoundStreet: 'Ми не знайшли таку вулицю у поточному місці, ви впевнені, що треба її додати?',
+      changeGoogle: 'Ви впевненні що хочете замінити дані Google?',
     }
   },
   'ru': {
     title: 'Информация 📍',
     notFound: 'Ничего не найдено',
+    loadMore: 'Показать больше…',
+    loading: 'Загрузка…',
     options: {
       title: 'Настройки',
       modal: 'Использовать отдельную панель',
@@ -100,6 +114,9 @@ export const TRANSLATION: Record<string, any> = {
       lock: 'Блокировать POI 2-м уровнем',
       addHouseNumber: 'Автоматически добавлять номер дома',
       linkGoogle: 'Автоматически связывать место Google',
+      addPhone: 'Автоматически добавлять телефон из Gmaps',
+      addWebsite: 'Автоматически добавлять вебсайт',
+      addOpeningHours: 'Автоматически добавлять часы работы',
       keys: 'Ключи к API',
     },
     format: {
@@ -129,11 +146,14 @@ export const TRANSLATION: Record<string, any> = {
       changeNumber: 'Ви уверены, что хотите изменить номер дома?',
       notFoundCity: 'Мы не нашли такого города в данной локации, вы уверены что нужно его добавить?',
       notFoundStreet: 'Мы не нашли такую улицу в данной локации, вы уверены что нужно её добавить?',
+      changeGoogle: 'Вы уверены, что хотите заменить данные Google?',
     }
   },
   'fr': {
     title: 'Informations 📍',
     notFound: 'Lieu inconnu',
+    loadMore: 'Afficher plus…',
+    loading: 'Chargement…',
     options: {
       title: 'Réglages',
       modal: 'Activer la fenêtre',
@@ -143,6 +163,9 @@ export const TRANSLATION: Record<string, any> = {
       lock: 'Verrouiller le POI au niveau 2',
       addHouseNumber: 'Ajouter automatiquement le numéro de rue',
       linkGoogle: 'Lier automatiquement le lieu Google',
+      addPhone: 'Ajouter automatiquement le téléphone depuis Gmaps',
+      addWebsite: 'Ajouter automatiquement le site web',
+      addOpeningHours: 'Ajouter automatiquement les horaires',
       keys: 'API keys',
     },
     format: {
@@ -171,7 +194,8 @@ export const TRANSLATION: Record<string, any> = {
       changeStreet: 'Êtes-vous sûr de changer la rue ?',
       changeNumber: 'Êtes-vous sûr de changer le numéro de rue ?',
       notFoundCity: 'City not found in the current location, are you sure to create a new one?',
-      notFoundStreet: 'Street not found in the current location, are you sure to create a new one?'
+      notFoundStreet: 'Street not found in the current location, are you sure to create a new one?',
+      changeGoogle: 'Voulez-vous remplacer les données Google existantes ?',
     }
   }
 }

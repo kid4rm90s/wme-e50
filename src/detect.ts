@@ -35,10 +35,14 @@ export function detectStreet(wmeSDK: any, cityId: number, streetName: string): [
     return [null, null as any]
   }
 
-  // Get all streets
+  // Get all streets. If the city couldn't be resolved (cityId is null),
+  // fall back to searching all streets instead of matching nothing.
   let streets = wmeSDK.DataModel.Streets.getAll()
-    .filter((street: any) => street.cityId === cityId)
     .filter((street: any) => street.name)
+
+  if (cityId !== null && cityId !== undefined) {
+    streets = streets.filter((street: any) => street.cityId === cityId)
+  }
 
   // Get type and create RegExp for filter streets
   let reTypes = new RegExp('(алея|б-р|в\'їзд|вул\\.|дор\\.|мкрн|наб\\.|площа|пров\\.|проїзд|просп\\.|р-н|ст\\.|тракт|траса|тупик|узвіз|шосе)', 'gi')

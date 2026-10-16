@@ -176,3 +176,57 @@ export function hideLayer () {
   E50Instance.removeVectors()
   E50Instance.hideLayer()
 }
+
+// Last dragged position, kept for the lifetime of the script so a recreated
+// modal (selection cleared, then a venue re-selected) reopens where it was left.
+let modalPosition: { left: number, top: number } | null = null
+
+/**
+ * Make a modal window draggable by its header (native pointer events, no deps).
+ * The first drag anchors the modal with `position: fixed` at its current spot,
+ * so it floats over the map and can be moved anywhere.
+ */
+export function makeDraggable (modal: HTMLElement) {
+  const handle = modal.querySelector('.wme-ui-modal-header') as HTMLElement
+  if (!handle || handle.dataset.e50Drag) return
+  handle.dataset.e50Drag = '1'
+  handle.style.cursor = 'move'
+
+  // Reopen a rebuilt modal at the last dragged position
+  if (modalPosition) {
+    modal.style.position = 'fixed'
+    modal.style.margin = '0'
+    modal.style.left = modalPosition.left + 'px'
+    modal.style.top = modalPosition.top + 'px'
+    modal.style.zIndex = '99'
+  }
+
+  handle.addEventListener('pointerdown', (event: PointerEvent) => {
+    if ((event.target as HTMLElement).closest('.wme-ui-modal-close')) return
+    const rect = modal.getBoundingClientRect()
+    const shiftX = event.clientX - rect.left
+    const shiftY = event.clientY - rect.top
+    modal.style.position = 'fixed'
+    modal.style.margin = '0'
+    modal.style.left = rect.left + 'px'
+    modal.style.top = rect.top + 'px'
+    modal.style.zIndex = '99'
+    handle.setPointerCapture(event.pointerId)
+
+    const move = (e: PointerEvent) => {
+      const left = e.clientX - shiftX
+      const top = e.clientY - shiftY
+      modal.style.left = left + 'px'
+      modal.style.top = top + 'px'
+      modalPosition = { left, top }
+    }
+    const up = () => {
+      handle.removeEventListener('pointermove', move)
+      handle.removeEventListener('pointerup', up)
+      handle.removeEventListener('pointercancel', up)
+    }
+    handle.addEventListener('pointermove', move)
+    handle.addEventListener('pointerup', up)
+    handle.addEventListener('pointercancel', up)
+  })
+}

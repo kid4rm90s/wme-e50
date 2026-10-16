@@ -209,3 +209,38 @@ p.e50-info {
   font-size: 24px;
   margin: 0;
 }
+
+/* Google import options are children of "Auto-link Google place" */
+.e50-addPhone,
+.e50-addWebsite,
+.e50-addOpeningHours {
+  margin-left: 20px;
+}
+
+.e50-addPhone:has(input:disabled),
+.e50-addWebsite:has(input:disabled),
+.e50-addOpeningHours:has(input:disabled) {
+  opacity: 0.5;
+}
+
+/* Google "Load more" row, styled as a small button */
+.wme-ui-modal.e50 li a.e50-load-more,
+.wme-ui-panel.e50 li a.e50-load-more {
+  background: #2e7d32;
+  border-color: #2e7d32;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  margin: 2px auto 0;
+  padding: 2px 8px;
+  text-align: center;
+  width: fit-content;
+}
+
+.wme-ui-modal.e50 li a.e50-load-more:hover,
+.wme-ui-panel.e50 li a.e50-load-more:hover {
+  background: #256428;
+  border-color: #256428;
+  color: #fff;
+}

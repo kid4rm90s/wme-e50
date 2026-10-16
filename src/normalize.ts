@@ -34,6 +34,34 @@ export function normalizeCity(city: any): string {
 }
 
 /**
+ * Normalize a website URL for WME:
+ *  - drop the query string and hash (tracking params)
+ *  - strip the protocol (`https://`)
+ *  - strip a leading `www.`
+ *  - drop a trailing slash
+ *
+ * Example: `https://www.example.com/a/b.aspx?utm=google` -> `example.com/a/b.aspx`
+ */
+export function normalizeUrl(url: any): string {
+  let value = String(url || '').trim()
+  if (!value) return ''
+
+  value = value.split('?')[0].split('#')[0]
+  value = value.replace(/^https?:\/\//i, '')
+  value = value.replace(/^www\./i, '')
+  while (value.length > 1 && value.endsWith('/')) value = value.slice(0, -1)
+
+  return value.trim()
+}
+
+/**
+ * A value is a usable website when it has no spaces and contains a dot.
+ */
+export function isValidUrl(url: string): boolean {
+  return !!url && !/\s/.test(url) && url.includes('.')
+}
+
+/**
  * Normalize the street name by UA rules
  */
 export function normalizeStreet(street: any): string {

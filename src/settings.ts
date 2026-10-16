@@ -8,6 +8,9 @@ export const SETTINGS = {
     lock: true,
     addHouseNumber: true,
     linkGoogle: false,
+    addPhone: false,
+    addWebsite: false,
+    addOpeningHours: false,
   },
   format: {
     nameFirst: false,

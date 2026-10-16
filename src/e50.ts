@@ -1,4 +1,6 @@
 import { NAME } from './name'
+import { makeDraggable } from './helpers'
+import { normalizeUrl, isValidUrl } from './normalize'
 import { LOCALE } from './types'
 import { SETTINGS } from './settings'
 import { layerConfig } from './layers'
@@ -8,7 +10,7 @@ import { VisicomProvider } from './providers/visicom'
 import { OsmProvider } from './providers/osm'
 import { HereProvider } from './providers/here'
 import { BingProvider } from './providers/bing'
-import { GoogleProvider } from './providers/google'
+import { GoogleProvider, parseOpeningHours } from './providers/google'
 
 export class E50 extends WMEBase {
   modal: any
@@ -42,7 +44,13 @@ export class E50 extends WMEBase {
       if (options.hasOwnProperty(item)) {
         checkboxes[item] = {
           title: WMEUI.t(NAME).options[item],
-          callback: (event: any) => this.settings.set('options', item, event.target.checked),
+          callback: (event: any) => {
+            this.settings.set('options', item, event.target.checked)
+            // The Google import options are children of the Google link option
+            if (item === 'linkGoogle') {
+              this.syncGoogleOptions()
+            }
+          },
           checked: this.settings.get('options', item),
         }
       }
@@ -133,7 +141,7 @@ export class E50 extends WMEBase {
     tab.addText('blue', 'made in')
     tab.addText('yellow', 'Ukraine')
 
-    tab.inject()
+    tab.inject().then(() => this.syncGoogleOptions())
   }
 
   initLayer () {
@@ -386,6 +394,7 @@ export class E50 extends WMEBase {
         parent.onmouseover = () => (parent.style.opacity = '1')
         parent.onmouseout = () => (parent.style.opacity = '0.6')
       }
+      makeDraggable(parent)
       this.modal.container().append(parent)
     } else {
       element.prepend(parent)
@@ -663,7 +672,76 @@ export class E50 extends WMEBase {
       })
     }
 
+    // Apply Google phone / website / opening hours (only Google results carry a reference)
+    if (data.reference) {
+      this.applyGoogleData(venue, data.reference)
+    }
+
     this.groupEnd()
+  }
+
+  /**
+   * Enable/disable the Google import checkboxes. They are children of
+   * "Auto-link Google place" and only make sense while it is enabled.
+   */
+  syncGoogleOptions () {
+    const uid = WMEUI.normalize(NAME)
+    const disabled = !this.settings.get('options', 'linkGoogle')
+    for (const option of ['addPhone', 'addWebsite', 'addOpeningHours']) {
+      const input = document.getElementById(uid + '-' + option) as HTMLInputElement | null
+      if (input) input.disabled = disabled
+    }
+  }
+
+  /**
+   * Fetch Google place details and apply phone / website / opening hours when
+   * the matching option is enabled. `updateVenue` replaces `openingHours`, so
+   * the full parsed set is sent in a single call.
+   */
+  async applyGoogleData (venue: any, reference: string) {
+    // These options are children of "Auto-link Google place"
+    if (!this.settings.get('options', 'linkGoogle')) return
+
+    const enabled = ['addPhone', 'addWebsite', 'addOpeningHours']
+      .filter(option => this.settings.get('options', option))
+    if (!enabled.length) return
+
+    const details = await GoogleProvider.makeDetailsRequest(reference).catch(() => null)
+    if (!details) return
+
+    const update: any = {}
+    if (this.settings.get('options', 'addPhone')) {
+      const phone = String(details.international_phone_number || details.formatted_phone_number || '').trim()
+      if (phone && phone !== String(venue.phone || '').trim()) update.phone = phone
+    }
+    if (this.settings.get('options', 'addWebsite')) {
+      // Normalize both sides: WME stores the bare "example.com/path" form
+      const url = normalizeUrl(details.website)
+      if (isValidUrl(url) && url !== normalizeUrl(venue.url)) update.url = url
+    }
+    if (this.settings.get('options', 'addOpeningHours')) {
+      const hours = parseOpeningHours(details)
+      if (hours?.length && JSON.stringify(hours) !== JSON.stringify(venue.openingHours || [])) {
+        update.openingHours = hours
+      }
+    }
+
+    const fields = Object.keys(update)
+    if (!fields.length) return
+
+    // Ask before overwriting any existing value
+    const overwrite = fields.filter(field => {
+      const current = venue[field]
+      return Array.isArray(current) ? current.length > 0 : !!current
+    })
+    if (overwrite.length && !window.confirm(
+      WMEUI.t(NAME).questions.changeGoogle + '\n' + overwrite.join(', ')
+    )) {
+      return
+    }
+
+    this.log('Apply Google data \u00AB' + fields.join(', ') + '\u00BB')
+    this.wmeSDK.DataModel.Venues.updateVenue({ venueId: venue.id, ...update })
   }
 
   getCityById (cityID: any) {
